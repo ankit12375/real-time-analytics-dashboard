@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Real-time Analytics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0f1a;--card:#141829;--border:#1e2640;--text:#e8eaed;--muted:#6b7394;--primary:#6366f1;--success:#10b981;--warning:#f59e0b;--error:#ef4444;--blue:#3b82f6;--purple:#8b5cf6}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;padding:20px}
+.dashboard{max-width:1200px;margin:0 auto}
+.header{margin-bottom:24px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:22px;font-weight:700}
+.header .live{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--success)}
+.header .live::before{content:'';width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.kpi-card .label{font-size:12px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.kpi-card .value{font-size:28px;font-weight:700}
+.kpi-card .change{font-size:12px;margin-top:4px;display:flex;align-items:center;gap:4px}
+.kpi-card .change.up{color:var(--success)}
+.kpi-card .change.down{color:var(--error)}
+.charts-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.chart-card h3{font-size:14px;font-weight:600;margin-bottom:16px;color:var(--muted)}
+.chart-container{position:relative;height:250px}
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.table-container{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 12px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td{padding:10px 12px;border-bottom:1px solid var(--border)}
+.status{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.status.active{background:var(--success)}.status.pending{background:var(--warning)}.status.error{background:var(--error)}
+@media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.charts-grid,.bottom-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="dashboard">
+<div class="header"><h1>Analytics Dashboard</h1><div class="live">Live Updates</div></div>
+<div class="kpi-grid">
+<div class="kpi-card"><div class="label">Total Revenue</div><div class="value" id="kpi1">$124,592</div><div class="change up">+12.5% vs last month</div></div>
+<div class="kpi-card"><div class="label">Active Users</div><div class="value" id="kpi2">8,429</div><div class="change up">+5.2% vs last month</div></div>
+<div class="kpi-card"><div class="label">Conversion Rate</div><div class="value" id="kpi3">3.24%</div><div class="change down">-0.8% vs last month</div></div>
+<div class="kpi-card"><div class="label">Avg Session</div><div class="value" id="kpi4">4m 32s</div><div class="change up">+15s vs last month</div></div>
+</div>
+<div class="charts-grid">
+<div class="chart-card"><h3>Revenue Over Time</h3><div class="chart-container"><canvas id="lineChart"></canvas></div></div>
+<div class="chart-card"><h3>Traffic Sources</h3><div class="chart-container"><canvas id="doughnutChart"></canvas></div></div>
+</div>
+<div class="bottom-grid">
+<div class="chart-card"><h3>Weekly Performance</h3><div class="chart-container"><canvas id="barChart"></canvas></div></div>
+<div class="chart-card"><h3>Recent Transactions</h3><div class="table-container"><table><thead><tr><th>User</th><th>Amount</th><th>Status</th></tr></thead><tbody id="tableBody"></tbody></table></div></div>
+</div>
+</div>
+<script>
+const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const lineData={labels:months,datasets:[{label:'Revenue',data:[12000,19000,15000,22000,18000,24000,28000,25000,30000,32000,28000,35000],borderColor:'#6366f1',backgroundColor:'rgba(99,102,241,.1)',fill:true,tension:.4,pointRadius:3}]};
+const lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:lineData,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#1e2640'},ticks:{color:'#6b7394',font:{size:10}}},y:{grid:{color:'#1e2640'},ticks:{color:'#6b7394',font:{size:10},callback:v=>'$'+v/1000+'k'}}}}});
+const doughnutChart=new Chart(document.getElementById('doughnutChart'),{type:'doughnut',data:{labels:['Direct','Organic','Social','Referral','Email'],datasets:[{data:[35,28,18,12,7],backgroundColor:['#6366f1','#10b981','#f59e0b','#3b82f6','#8b5cf6'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#6b7394',font:{size:11},padding:12}}},cutout:'65%'}});
+const barChart=new Chart(document.getElementById('barChart'),{type:'bar',data:{labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],datasets:[{label:'Sessions',data:[1200,1900,1500,2200,1800,900,700],backgroundColor:'#6366f1',borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{color:'#6b7394',font:{size:10}}},y:{grid:{color:'#1e2640'},ticks:{color:'#6b7394',font:{size:10}}}}}});
+const users=['Alice Chen','Bob Smith','Carlos M.','Diana K.','Evan P.','Fiona L.','George R.','Hannah W.'];
+const statuses=['active','active','pending','active','error','active','pending','active'];
+function updateTable(){const tbody=document.getElementById('tableBody');tbody.innerHTML='';for(let i=0;i<5;i++){const user=users[Math.floor(Math.random()*users.length)];const amount=(Math.random()*500+10).toFixed(2);const status=statuses[Math.floor(Math.random()*statuses.length)];tbody.innerHTML+=`<tr><td>${user}</td><td>$${amount}</td><td><span class="status ${status}"></span>${status}</td></tr>`}}
+updateTable();
+setInterval(()=>{lineChart.data.datasets[0].data=lineChart.data.datasets[0].data.map(v=>v+Math.floor((Math.random()-.3)*2000));lineChart.update('none');document.getElementById('kpi1').textContent='$'+(124592+Math.floor(Math.random()*5000)).toLocaleString();document.getElementById('kpi2').textContent=(8429+Math.floor(Math.random()*200)).toLocaleString();updateTable()},3000);
+</script>
+</body>
+</html>
